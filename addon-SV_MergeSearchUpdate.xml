@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<addon addon_id="SV_MergeSearchUpdate" title="Merge Search Update" version_string="1.0.0" version_id="10000" url="" install_callback_class="SV_MergeSearchUpdate_Listener" install_callback_method="install" uninstall_callback_class="SV_MergeSearchUpdate_Listener" uninstall_callback_method="uninstall">
+  <admin_navigation/>
+  <admin_permissions/>
+  <admin_style_properties/>
+  <admin_templates/>
+  <admin_template_modifications/>
+  <code_events/>
+  <code_event_listeners>
+    <listener event_id="load_class" execute_order="10" callback_class="SV_MergeSearchUpdate_Listener" callback_method="load_class" active="1" hint="XenForo_Model_User" description="XenForo_Model_User"/>
+    <listener event_id="load_class" execute_order="10" callback_class="SV_MergeSearchUpdate_Listener" callback_method="load_class" active="1" hint="XenES_Search_SourceHandler_ElasticSearch" description="XenES_Search_SourceHandler_ElasticSearch"/>    
+  </code_event_listeners>
+  <cron/>
+  <email_templates/>
+  <email_template_modifications/>
+  <optiongroups/>
+  <permissions/>
+  <phrases/>
+  <route_prefixes/>
+  <style_properties/>
+  <templates/>
+  <public_template_modifications/>
+  <bb_code_media_sites/>
+  <bb_codes/>
+</addon>

@@ -67,34 +67,42 @@ class SV_MergeSearchUpdate_XenForo_Model_User extends XFCP_SV_MergeSearchUpdate_
                 return false;
             }
 
+            // require re-indexing, can't update as the source document isn't stored in Elastic Search
             $haveMore = $response->hits->total >= $limit;
-            $items = array();
-            foreach ($response->hits->hits as &$hit)
+            if ($response->hits->total > 0)
             {
-                $items[] = json_encode(array('index' => array(
-                    '_index' => $hit->_index,
-                    '_type' => $hit->_type,
-                    '_id' => $hit->_id
-                ))) . "\n" . json_encode(array(
-                    'doc' => array(
-                        'user' => $user['target']
-                    )
-                ));
-            }
+                $indexer = new XenForo_Search_Indexer();
+                $indexer->setIsRebuild(true);
+                $searchModel = XenForo_Model::create('XenForo_Model_Search');
+                $searchContentTypes = $searchModel->getSearchContentTypes();
+                $ContentIdBatch = array();
 
-            if (!empty($items))
-            {
-                $response = $esApi->call(Zend_Http_Client::POST,
-                    '_bulk',
-                    implode("\n", $items) . "\n"
-                );
-                $sourceHandler->sv_logSearchResponseError($response);
-
-                if (!$response || !isset($response->took))
+                foreach ($response->hits->hits as &$hit)
                 {
-                    $sourceHandler->sv_logSearchResponseError($response);
-                    return false;
+                    $contentType = $hit->_type;
+                    if (!isset($ContentIdBatch[$contentType]))
+                    {
+                        $ContentIdBatch[$contentType] = array();
+                    }
+                    $ContentIdBatch[$contentType][] = $hit->_id;
                 }
+
+                foreach($ContentIdBatch as $contentType => &$ContentIds)
+                {
+                    if (!isset($searchContentTypes[$contentType]))
+                    {
+                        continue;
+                    }
+
+                    $searchHandler = $searchContentTypes[$contentType];
+                    echo $searchHandler."\n";
+                    if (class_exists($searchHandler))
+                    {
+                        $handler = XenForo_Search_DataHandler_Abstract::create($searchHandler);
+                        $handler->quickIndex($indexer, $ContentIds);
+                    }
+                }
+                $indexer->finalizeRebuildSet();
             }
         }
         else

@@ -13,9 +13,11 @@ class SV_MergeSearchUpdate_Listener
         $db->query("
             CREATE TABLE IF NOT EXISTS xf_sv_user_merge_queue
             (
+                `queue_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
                 `target` int(10) unsigned NOT NULL,
                 `source` int(10) unsigned NOT NULL,
-                PRIMARY KEY (`target`, `source`)
+                PRIMARY KEY (`queue_id`),
+                UNIQUE KEY `change_set` (`target`,`source`)
             ) ENGINE=InnoDB CHARACTER SET utf8 COLLATE utf8_general_ci
         ");
     }

@@ -24,6 +24,7 @@ class SV_MergeSearchUpdate_XenForo_Model_User extends XFCP_SV_MergeSearchUpdate_
         $user = $db->fetchRow('
             SELECT *
             FROM xf_sv_user_merge_queue
+            ORDER BY queue_id
             LIMIT 1
         ');
         if (empty($user))

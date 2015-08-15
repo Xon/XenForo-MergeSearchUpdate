@@ -8,7 +8,7 @@ class SV_MergeSearchUpdate_XenForo_Model_User extends XFCP_SV_MergeSearchUpdate_
         if ($result && $target['user_id'] != $source['user_id'])
         {
             $this->_getDb()->query('
-                insert ignore xf_user_merge_queue (target, source) values (?,?)
+                insert ignore xf_sv_user_merge_queue (target, source) values (?,?)
             ', array($target['user_id'], $source['user_id']));
             // trigger re-indexing.
             XenForo_Application::defer('SV_MergeSearchUpdate_Deferred_SearchIndex', array(), 'user_merge');
@@ -44,31 +44,30 @@ class SV_MergeSearchUpdate_XenForo_Model_User extends XFCP_SV_MergeSearchUpdate_
             $class = XenForo_Application::resolveDynamicClass('XenES_Search_SourceHandler_ElasticSearch');
             $sourceHandler = new $class();
 
-            $dsl = '{
-    "from" : 0, "size" : "' . intval($limit). '",
-    "query": {
-        "filtered": {
-            "filter": {
-                "bool" : {
-                    "must" : [
-                        {
-                            "term" : {"user" : "' . $user['source'] . '"}
-                        }
-                    ]
-                }
-            }
-        }
-    }
-}
-';
+            $dsl = array(
+                'from' => 0,
+                'size' => $limit,
+                'query' => array(
+                    'filtered' => array(
+                        'filter' => array(
+                            'bool' => array(
+                                'must' => array(
+                                    array('term' => array('user' => $user['source']))
+                                )
+                            )
+                        )
+                    )
+                )
+            );
 
             $response = XenES_Api::search($indexName, $dsl);
             if (!$response || !isset($response->hits, $response->hits->hits))
             {
                 $sourceHandler->sv_logSearchResponseError($response);
-                return true;
+                return false;
             }
 
+            $haveMore = $response->hits->total >= $limit;
             $items = array();
             foreach ($response->hits->hits as &$hit)
             {
@@ -83,23 +82,19 @@ class SV_MergeSearchUpdate_XenForo_Model_User extends XFCP_SV_MergeSearchUpdate_
                 ));
             }
 
-            $response = self::getInstance()->call(Zend_Http_Client::POST,
-                '_bulk',
-                implode("\n", $items) . "\n"
-            );
-
-            if (!$response || !isset($response->took))
+            if (!empty($items))
             {
+                $response = $esApi->call(Zend_Http_Client::POST,
+                    '_bulk',
+                    implode("\n", $items) . "\n"
+                );
                 $sourceHandler->sv_logSearchResponseError($response);
-                return true;
-            }
 
-            $response = $this->es_updateBulk($indexName, $contentType, $results);
-
-            if ($response->hits->total < $limit)
-            {
-                $sourceHandler->sv_logSearchResponseError($response);
-                $finished = true;
+                if (!$response || !isset($response->took))
+                {
+                    $sourceHandler->sv_logSearchResponseError($response);
+                    return false;
+                }
             }
         }
         else
@@ -110,41 +105,24 @@ class SV_MergeSearchUpdate_XenForo_Model_User extends XFCP_SV_MergeSearchUpdate_
                 set user_id = ?
                 WHERE user_id = ?
             ', array($user['target'], $user['source']));
-            $finished = true;
+            $haveMore = false;
         }
 
-        if ($finished)
+        if ($haveMore)
         {
-            $db->query('
-                DELETE
-                FROM xf_sv_user_merge_queue
-                WHERE target = ? source = ?
-            ', array($user['target'], $user['source']));
+            return $haveMore;
         }
+
+        $db->query('
+            DELETE
+            FROM xf_sv_user_merge_queue
+            WHERE target = ? and source = ?
+        ', array($user['target'], $user['source']));
 
         $haveMore = $db->fetchOne('
             SELECT count(*)
             FROM xf_sv_user_merge_queue
         ') != 0;
         return $haveMore;
-    }
-
-    public function es_updateBulk($indexName, $contentType, array $contentData)
-    {
-        $items = array();
-
-        foreach ($contentData AS $contentId => $content)
-        {
-            $items[] = json_encode(array('index' => array(
-                '_index' => $indexName,
-                '_type' => $contentType,
-                '_id' => $contentId
-            ))) . "\n" . json_encode($content);
-        }
-
-        return self::getInstance()->call(Zend_Http_Client::POST,
-            '_bulk',
-            implode("\n", $items) . "\n"
-        );
     }
 }

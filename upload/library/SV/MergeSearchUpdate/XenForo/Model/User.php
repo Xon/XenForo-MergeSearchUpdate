@@ -32,18 +32,9 @@ class SV_MergeSearchUpdate_XenForo_Model_User extends XFCP_SV_MergeSearchUpdate_
             return false;
         }
 
-        $finished = false;
-
-        $options = XenForo_Application::getOptions();
-        if ($options->enableElasticsearch && class_exists('XenES_Api'))
+        if (XenForo_Application::getOptions()->enableElasticsearch && class_exists('XenES_Api'))
         {
-            // update Elastic Search search index.
-            $esApi = XenES_Api::getInstance();
-            $indexName = $esApi->getIndex();
-
-            $class = XenForo_Application::resolveDynamicClass('XenES_Search_SourceHandler_ElasticSearch');
-            $sourceHandler = new $class();
-
+            // query Elastic Search for content with a matching UserId
             $dsl = array(
                 'from' => 0,
                 'size' => $limit,
@@ -60,6 +51,11 @@ class SV_MergeSearchUpdate_XenForo_Model_User extends XFCP_SV_MergeSearchUpdate_
                 )
             );
 
+            $esApi = XenES_Api::getInstance();
+            $indexName = $esApi->getIndex();
+            $class = XenForo_Application::resolveDynamicClass('XenES_Search_SourceHandler_ElasticSearch');
+            $sourceHandler = new $class();
+
             $response = XenES_Api::search($indexName, $dsl);
             if (!$response || !isset($response->hits, $response->hits->hits))
             {
@@ -67,16 +63,18 @@ class SV_MergeSearchUpdate_XenForo_Model_User extends XFCP_SV_MergeSearchUpdate_
                 return false;
             }
 
-            // require re-indexing, can't update as the source document isn't stored in Elastic Search
+            // Require re-indexing, as an inplace update can not be done.
+            // Elastic Search requires the entire source document to be stored, which XF doesn't do.
             $haveMore = $response->hits->total >= $limit;
             if ($response->hits->total > 0)
             {
-                $indexer = new XenForo_Search_Indexer();
-                $indexer->setIsRebuild(true);
                 $searchModel = XenForo_Model::create('XenForo_Model_Search');
                 $searchContentTypes = $searchModel->getSearchContentTypes();
-                $ContentIdBatch = array();
+                $indexer = new XenForo_Search_Indexer();
+                $indexer->setIsRebuild(true);
 
+                // collect into per content type batches to pass to the various search handlers
+                $ContentIdBatch = array();
                 foreach ($response->hits->hits as &$hit)
                 {
                     $contentType = $hit->_type;
@@ -102,6 +100,7 @@ class SV_MergeSearchUpdate_XenForo_Model_User extends XFCP_SV_MergeSearchUpdate_
                         $handler->quickIndex($indexer, $ContentIds);
                     }
                 }
+                // flush out the rebuild set
                 $indexer->finalizeRebuildSet();
             }
         }

@@ -65,7 +65,7 @@ class SV_MergeSearchUpdate_XenForo_Model_User extends XFCP_SV_MergeSearchUpdate_
             $response = XenES_Api::search($indexName, $dsl);
             if (!$response || !isset($response->hits, $response->hits->hits))
             {
-                $sourceHandler->sv_logSearchResponseError($response, true);
+                $sourceHandler->sv_logSearchResponseError($response);
                 return true;
             }
 
@@ -90,14 +90,15 @@ class SV_MergeSearchUpdate_XenForo_Model_User extends XFCP_SV_MergeSearchUpdate_
 
             if (!$response || !isset($response->took))
             {
-                $sourceHandler->sv_logSearchResponseError($response, true);
+                $sourceHandler->sv_logSearchResponseError($response);
                 return true;
             }
 
-            $this->es_updateBulk($indexName, $contentType, $results);
+            $response = $this->es_updateBulk($indexName, $contentType, $results);
 
             if ($response->hits->total < $limit)
             {
+                $sourceHandler->sv_logSearchResponseError($response);
                 $finished = true;
             }
         }

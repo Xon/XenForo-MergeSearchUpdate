@@ -93,7 +93,6 @@ class SV_MergeSearchUpdate_XenForo_Model_User extends XFCP_SV_MergeSearchUpdate_
                     }
 
                     $searchHandler = $searchContentTypes[$contentType];
-                    echo $searchHandler."\n";
                     if (class_exists($searchHandler))
                     {
                         $handler = XenForo_Search_DataHandler_Abstract::create($searchHandler);

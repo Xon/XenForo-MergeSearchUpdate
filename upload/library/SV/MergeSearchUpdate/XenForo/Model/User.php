@@ -23,7 +23,7 @@ class SV_MergeSearchUpdate_XenForo_Model_User extends XFCP_SV_MergeSearchUpdate_
 
         $user = $db->fetchRow('
             SELECT *
-            FROM xf_user_merge_queue
+            FROM xf_sv_user_merge_queue
             LIMIT 1
         ');
         if (empty($user))
@@ -93,7 +93,6 @@ class SV_MergeSearchUpdate_XenForo_Model_User extends XFCP_SV_MergeSearchUpdate_
                 return true;
             }
 
-            //XenES_Api::indexBulk($indexName, $contentType, $results);
             $this->es_updateBulk($indexName, $contentType, $results);
 
             if ($response->hits->total < $limit)
@@ -116,14 +115,14 @@ class SV_MergeSearchUpdate_XenForo_Model_User extends XFCP_SV_MergeSearchUpdate_
         {
             $db->query('
                 DELETE
-                FROM xf_user_merge_queue
+                FROM xf_sv_user_merge_queue
                 WHERE target = ? source = ?
             ', array($user['target'], $user['source']));
         }
 
         $haveMore = $db->fetchOne('
             SELECT count(*)
-            FROM xf_user_merge_queue
+            FROM xf_sv_user_merge_queue
         ') != 0;
         return $haveMore;
     }

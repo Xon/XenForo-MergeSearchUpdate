@@ -11,7 +11,7 @@ class SV_MergeSearchUpdate_Listener
         $db = XenForo_Application::getDb();
 
         $db->query("
-            CREATE TABLE IF NOT EXISTS xf_user_merge_queue
+            CREATE TABLE IF NOT EXISTS xf_sv_user_merge_queue
             (
                 `target` int(10) unsigned NOT NULL,
                 `source` int(10) unsigned NOT NULL,
@@ -25,7 +25,7 @@ class SV_MergeSearchUpdate_Listener
         $db = XenForo_Application::getDb();
 
         $db->query("
-            DROP TABLE IF EXISTS xf_collaboration_users_post;
+            DROP TABLE IF EXISTS xf_sv_user_merge_queue;
         ");
         return true;
     }

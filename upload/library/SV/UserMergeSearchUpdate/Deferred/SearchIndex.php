@@ -1,6 +1,6 @@
 <?php
 
-class SV_MergeSearchUpdate_Deferred_SearchIndex extends XenForo_Deferred_Abstract
+class SV_UserMergeSearchUpdate_Deferred_SearchIndex extends XenForo_Deferred_Abstract
 {
     public function execute(array $deferred, array $data, $targetRunTime, &$status)
     {

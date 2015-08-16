@@ -1,8 +1,8 @@
 <?php
 
-class SV_MergeSearchUpdate_Listener
+class SV_UserMergeSearchUpdate_Listener
 {
-    const AddonNameSpace = 'SV_MergeSearchUpdate_';
+    const AddonNameSpace = 'SV_UserMergeSearchUpdate_';
 
     public static function install($existingAddOn, array $addOnData, SimpleXMLElement $xml)
     {

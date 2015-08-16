@@ -1,6 +1,6 @@
 <?php
 
-class SV_MergeSearchUpdate_XenForo_Model_User extends XFCP_SV_MergeSearchUpdate_XenForo_Model_User
+class SV_UserMergeSearchUpdate_XenForo_Model_User extends XFCP_SV_UserMergeSearchUpdate_XenForo_Model_User
 {
     public function mergeUsers(array $target, array $source)
     {
@@ -11,7 +11,7 @@ class SV_MergeSearchUpdate_XenForo_Model_User extends XFCP_SV_MergeSearchUpdate_
                 insert ignore xf_sv_user_merge_queue (target, source) values (?,?)
             ', array($target['user_id'], $source['user_id']));
             // trigger re-indexing.
-            XenForo_Application::defer('SV_MergeSearchUpdate_Deferred_SearchIndex', array(), 'user_merge');
+            XenForo_Application::defer('SV_UserMergeSearchUpdate_Deferred_SearchIndex', array(), 'user_merge');
         }
 
         return $result;

@@ -1,4 +1,4 @@
-XenForo-MergeSearchUpdate
+XenForo-UserMergeSearchUpdate
 ======================
 
 Updates the search index when a user is merged into another

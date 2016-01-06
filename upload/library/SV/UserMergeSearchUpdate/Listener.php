@@ -20,6 +20,8 @@ class SV_UserMergeSearchUpdate_Listener
                 UNIQUE KEY `change_set` (`target`,`source`)
             ) ENGINE=InnoDB CHARACTER SET utf8 COLLATE utf8_general_ci
         ");
+
+        XenForo_Application::defer('SV_UserMergeSearchUpdate_Deferred_SearchIndex', array(), 'user_merge');
     }
 
     public static function uninstall()

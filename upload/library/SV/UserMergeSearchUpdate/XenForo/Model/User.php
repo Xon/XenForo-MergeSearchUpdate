@@ -38,18 +38,18 @@ class SV_UserMergeSearchUpdate_XenForo_Model_User extends XFCP_SV_UserMergeSearc
             $dsl = array(
                 'from' => 0,
                 'size' => $limit,
-                'query' => array(
-                    'filtered' => array(
-                        'filter' => array(
-                            'bool' => array(
-                                'must' => array(
-                                    array('term' => array('user' => $user['source']))
-                                )
-                            )
-                        )
-                    )
-                )
             );
+            $version = XenES_Api::version();
+            if ($version < 5)
+            {
+                $dsl['query']['filtered']['filter']['bool']['must'] = array('term' => array('user' => $user['source']));
+
+            }
+            else
+            {
+                $dsl['query']['bool']['must'] = array('term' => array('user' => $user['source']));
+
+            }
 
             $esApi = XenES_Api::getInstance();
             $indexName = $esApi->getIndex();

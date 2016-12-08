@@ -1,21 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
-<addon addon_id="SV_UserMergeSearchUpdate" title="User Merge Search Update" version_string="1.0.1" version_id="1000100" url="https://xenforo.com/community/resources/user-merge-search-update.4497/" install_callback_class="SV_UserMergeSearchUpdate_Listener" install_callback_method="install" uninstall_callback_class="SV_UserMergeSearchUpdate_Listener" uninstall_callback_method="uninstall">
+<addon addon_id="SV_UserMergeSearchUpdate" title="User Merge Search Update" version_string="1.0.2" version_id="1000200" url="https://xenforo.com/community/resources/user-merge-search-update.4497/" install_callback_class="SV_UserMergeSearchUpdate_Listener" install_callback_method="install" uninstall_callback_class="SV_UserMergeSearchUpdate_Listener" uninstall_callback_method="uninstall">
   <admin_navigation/>
   <admin_permissions/>
   <admin_style_properties/>
-  <admin_templates/>
-  <admin_template_modifications/>
+  <admin_templates>
+    <template title="tools_rebuild_user_merge"><![CDATA[<xen:form action="{xen:adminlink 'tools/trigger-deferred'}">
+	<h2 class="subHeading">{xen:phrase rebuild_user_merge}</h2>
+<xen:comment>
+	<xen:spinboxunit name="options[batch]" value="250" step="50" min="1" label="{xen:phrase items_to_process_per_page}:" />
+</xen:comment>
+
+	<xen:submitunit save="{xen:phrase rebuild_now}" />
+	<input type="hidden" name="cache" value="SV_UserMergeSearchUpdate_Deferred_SearchIndex" />
+</xen:form>
+]]></template>
+  </admin_templates>
+  <admin_template_modifications>
+    <modification template="tools_rebuild" modification_key="user_merge_rebuild" description="Add the builders for user merges" execution_order="10" enabled="1" action="preg_replace">
+      <find><![CDATA[/$/]]></find>
+      <replace><![CDATA[<xen:include template="tools_rebuild_user_merge" />]]></replace>
+    </modification>
+  </admin_template_modifications>
   <code_events/>
   <code_event_listeners>
     <listener event_id="load_class" execute_order="4497" callback_class="SV_UserMergeSearchUpdate_Listener" callback_method="load_class" active="1" hint="XenForo_Model_User" description="XenForo_Model_User"/>
-    <listener event_id="load_class" execute_order="4497" callback_class="SV_UserMergeSearchUpdate_Listener" callback_method="load_class" active="1" hint="XenES_Search_SourceHandler_ElasticSearch" description="XenES_Search_SourceHandler_ElasticSearch"/>    
+    <listener event_id="load_class" execute_order="4497" callback_class="SV_UserMergeSearchUpdate_Listener" callback_method="load_class" active="1" hint="XenES_Search_SourceHandler_ElasticSearch" description="XenES_Search_SourceHandler_ElasticSearch"/>
   </code_event_listeners>
   <cron/>
   <email_templates/>
   <email_template_modifications/>
   <optiongroups/>
-  <permissions/>
-  <phrases/>
+  <permissions>
+    <permission_groups/>
+    <permissions/>
+    <interface_groups/>
+  </permissions>
+  <phrases>
+    <phrase title="rebuild_user_merge" version_id="1000200" version_string="1.0.2"><![CDATA[Complete User Merge search Update]]></phrase>
+  </phrases>
   <route_prefixes/>
   <style_properties/>
   <templates/>

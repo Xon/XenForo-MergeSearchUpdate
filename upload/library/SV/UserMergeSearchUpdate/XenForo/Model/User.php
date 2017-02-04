@@ -4,7 +4,7 @@ class SV_UserMergeSearchUpdate_XenForo_Model_User extends XFCP_SV_UserMergeSearc
 {
     protected $allowUpdateSearchOnMerge = true;
 
-    public function queueUserSearchUpdate(array $oldUserId, array $newUserId)
+    public function queueUserSearchUpdate($oldUserId, $newUserId)
     {
         if ($newUserId != $oldUserId)
         {

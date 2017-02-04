@@ -2,16 +2,27 @@
 
 class SV_UserMergeSearchUpdate_XenForo_Model_User extends XFCP_SV_UserMergeSearchUpdate_XenForo_Model_User
 {
+    protected $allowUpdateSearchOnMerge = true;
+
+    public function queueUserSearchUpdate(array $oldUserId, array $newUserId)
+    {
+        if ($newUserId != $oldUserId)
+        {
+            return;
+        }
+        $this->_getDb()->query('
+            insert ignore xf_sv_user_merge_queue (target, source) values (?,?)
+        ', array($newUserId, $oldUserId));
+        // trigger re-indexing.
+        XenForo_Application::defer('SV_UserMergeSearchUpdate_Deferred_SearchIndex', array(), 'user_merge');
+    }
+
     public function mergeUsers(array $target, array $source)
     {
         $result = parent::mergeUsers($target, $source);
-        if ($result && $target['user_id'] != $source['user_id'])
+        if ($result && $this->allowUpdateSearchOnMerge)
         {
-            $this->_getDb()->query('
-                insert ignore xf_sv_user_merge_queue (target, source) values (?,?)
-            ', array($target['user_id'], $source['user_id']));
-            // trigger re-indexing.
-            XenForo_Application::defer('SV_UserMergeSearchUpdate_Deferred_SearchIndex', array(), 'user_merge');
+            $this->queueUserSearchUpdate($source['user_id'], $target['user_id']);
         }
 
         return $result;

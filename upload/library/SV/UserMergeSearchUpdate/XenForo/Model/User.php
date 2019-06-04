@@ -43,8 +43,16 @@ class SV_UserMergeSearchUpdate_XenForo_Model_User extends XFCP_SV_UserMergeSearc
             return false;
         }
 
-        if (XenForo_Application::getOptions()->enableElasticsearch && class_exists('XenES_Api'))
+        if (XenForo_Application::getOptions()->enableElasticsearch)
         {
+            $class = XenForo_Application::resolveDynamicClass('XenES_Search_SourceHandler_ElasticSearch');
+            if (!class_exists($class))
+            {
+                return false;
+            }
+            /** @var SV_UserMergeSearchUpdate_XenES_Search_SourceHandler_ElasticSearch $sourceHandler */
+            $sourceHandler = new $class();
+
             // query Elastic Search for content with a matching UserId
             $dsl = array(
                 'from' => 0,
@@ -64,8 +72,7 @@ class SV_UserMergeSearchUpdate_XenForo_Model_User extends XFCP_SV_UserMergeSearc
 
             $esApi = XenES_Api::getInstance();
             $indexName = $esApi->getIndex();
-            $class = XenForo_Application::resolveDynamicClass('XenES_Search_SourceHandler_ElasticSearch');
-            $sourceHandler = new $class();
+
 
             $response = XenES_Api::search($indexName, $dsl);
             if (!$response || !isset($response->hits, $response->hits->hits))
@@ -73,12 +80,17 @@ class SV_UserMergeSearchUpdate_XenForo_Model_User extends XFCP_SV_UserMergeSearc
                 $sourceHandler->sv_logSearchResponseError($response);
                 return false;
             }
+            /** @noinspection PhpUndefinedFieldInspection */
+            $totalHits = $response->hits->total;
+            /** @noinspection PhpUndefinedFieldInspection */
+            $hits = $response->hits->hits;
 
             // Require re-indexing, as an inplace update can not be done.
             // Elastic Search requires the entire source document to be stored, which XF doesn't do.
-            $haveMore = $response->hits->total >= $limit;
-            if ($response->hits->total > 0)
+            $haveMore = $totalHits >= $limit;
+            if ($totalHits > 0)
             {
+                /** @var XenForo_Model_Search $searchModel */
                 $searchModel = XenForo_Model::create('XenForo_Model_Search');
                 $searchContentTypes = $searchModel->getSearchContentTypes();
                 $indexer = new XenForo_Search_Indexer();
@@ -86,7 +98,7 @@ class SV_UserMergeSearchUpdate_XenForo_Model_User extends XFCP_SV_UserMergeSearc
 
                 // collect into per content type batches to pass to the various search handlers
                 $ContentIdBatch = array();
-                foreach ($response->hits->hits as &$hit)
+                foreach ($hits as &$hit)
                 {
                     $contentType = $hit->_type;
                     if (!isset($ContentIdBatch[$contentType]))
@@ -142,4 +154,9 @@ class SV_UserMergeSearchUpdate_XenForo_Model_User extends XFCP_SV_UserMergeSearc
         ') != 0;
         return $haveMore;
     }
+}
+
+if (false)
+{
+    class XFCP_SV_UserMergeSearchUpdate_XenForo_Model_User extends XenForo_Model_User {}
 }

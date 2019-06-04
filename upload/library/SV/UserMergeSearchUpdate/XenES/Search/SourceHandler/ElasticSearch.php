@@ -7,3 +7,8 @@ class SV_UserMergeSearchUpdate_XenES_Search_SourceHandler_ElasticSearch extends 
         $this->_logSearchResponseError($response, $rollback, $extraMessage);
     }
 }
+
+if (false)
+{
+    class XFCP_SV_UserMergeSearchUpdate_XenES_Search_SourceHandler_ElasticSearch extends XenES_Search_SourceHandler_ElasticSearch {}
+}

@@ -5,6 +5,7 @@ class SV_UserMergeSearchUpdate_Deferred_SearchIndex extends XenForo_Deferred_Abs
     public function execute(array $deferred, array $data, $targetRunTime, &$status)
     {
         $s = microtime(true);
+        /** @var SV_UserMergeSearchUpdate_XenForo_Model_User $userModel */
         $userModel = XenForo_Model::create('XenForo_Model_User');
         $haveMore = is_callable(array($userModel, 'updateSearchIndexForMergedUsers'));
         while($haveMore)
